@@ -1,0 +1,76 @@
+# Inspired by https://github.com/minimailboxes/docker/blob/master/.github/workflows/update-sh.yml
+name: minimailboxes-update
+
+on:
+  schedule:
+  - cron:  '00 12 * * *'
+
+jobs:
+  run_update_sh:
+    name: Run minimailboxes-update script
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Run minimailboxes-update script
+      run: |
+        # Inspired by https://github.com/minimailboxes/docker/blob/master/update.sh
+
+        # APCU
+        apcu_version="$(
+          git ls-remote --tags https://github.com/krakjoe/apcu.git \
+            | cut -d/ -f3 \
+            | grep -viE -- 'rc|b' \
+            | sed -E 's/^v//' \
+            | sort -V \
+            | tail -1
+        )"
+        sed -i "s|pecl install APCu.*\;|pecl install APCu-$apcu_version\;|" ./Containers/minimailboxes/Dockerfile
+        
+        # Memcached
+        memcached_version="$(
+          git ls-remote --tags https://github.com/php-memcached-dev/php-memcached.git \
+            | cut -d/ -f3 \
+            | grep -viE -- 'rc|b' \
+            | sed -E 's/^[rv]//' \
+            | sort -V \
+            | tail -1
+        )"
+        sed -i "s|pecl install memcached.*\;|pecl install memcached-$memcached_version\;|" ./Containers/minimailboxes/Dockerfile
+        
+        # Redis
+        redis_version="$(
+          git ls-remote --tags https://github.com/phpredis/phpredis.git \
+            | cut -d/ -f3 \
+            | grep -viE '[a-z]' \
+            | tr -d '^{}' \
+            | sort -V \
+            | tail -1
+        )"
+        sed -i "s|pecl install redis.*\;|pecl install redis-$redis_version\;|" ./Containers/minimailboxes/Dockerfile
+        
+        # Imagick
+        imagick_version="$(
+          git ls-remote --tags https://github.com/mkoppanen/imagick.git \
+            | cut -d/ -f3 \
+            | grep -viE '[a-z]' \
+            | tr -d '^{}' \
+            | sort -V \
+            | tail -1
+        )"
+        sed -i "s|pecl install imagick.*\;|pecl install imagick-$imagick_version\;|" ./Containers/minimailboxes/Dockerfile
+        
+        # MiniMailboxes
+        NC_MAJOR="$(grep "ENV MINIMAILBOXES_VERSION" ./Containers/minimailboxes/Dockerfile | grep -oP '[23][0-9]')"
+        NCVERSION=$(curl -s -m 900 https://download.minimailboxes.com/server/releases/ | sed --silent 's/.*href="minimailboxes-\([^"]\+\).zip.asc".*/\1/p' | grep "$NC_MAJOR" | sort --version-sort | tail -1)
+        sed -i "s|^ENV MINIMAILBOXES_VERSION.*|ENV MINIMAILBOXES_VERSION $NCVERSION|" ./Containers/minimailboxes/Dockerfile
+
+    - name: Create Pull Request
+      uses: peter-evans/create-pull-request@v4
+      with:
+        commit-message: minimailboxes-update automated change
+        signoff: true
+        title: MiniMailboxes update
+        body: Automated MiniMailboxes container update
+        labels: dependencies, enhancement
+        milestone: next
+        branch: minimailboxes-container-update

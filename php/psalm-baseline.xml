@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<files psalm-version="4.29.0@7ec5ffbd5f68ae03782d7fd33fff0c45a69f95b3">
+  <file src="public/index.php">
+    <MissingClosureParamType occurrences="10">
+      <code>$args</code>
+      <code>$args</code>
+      <code>$args</code>
+      <code>$args</code>
+      <code>$request</code>
+      <code>$request</code>
+      <code>$request</code>
+      <code>$response</code>
+      <code>$response</code>
+      <code>$response</code>
+    </MissingClosureParamType>
+  </file>
+  <file src="src/Controller/ConfigurationController.php">
+    <MissingParamType occurrences="1">
+      <code>$args</code>
+    </MissingParamType>
+  </file>
+  <file src="src/Controller/DockerController.php">
+    <MissingParamType occurrences="8">
+      <code>$args</code>
+      <code>$args</code>
+      <code>$args</code>
+      <code>$args</code>
+      <code>$args</code>
+      <code>$args</code>
+      <code>$args</code>
+      <code>$args</code>
+    </MissingParamType>
+  </file>
+  <file src="src/Controller/LoginController.php">
+    <MissingParamType occurrences="3">
+      <code>$args</code>
+      <code>$args</code>
+      <code>$args</code>
+    </MissingParamType>
+  </file>
+  <file src="src/Docker/DockerActionManager.php">
+    <InvalidReturnType occurrences="1">
+      <code>IContainerState</code>
+    </InvalidReturnType>
+    <InvalidScalarArgument occurrences="1">
+      <code>$internalPort</code>
+    </InvalidScalarArgument>
+    <RedundantCondition occurrences="1">
+      <code>$container-&gt;GetInternalPorts() !== null</code>
+    </RedundantCondition>
+  </file>
+  <file src="src/Twig/ClassExtension.php">
+    <MissingParamType occurrences="1">
+      <code>$object</code>
+    </MissingParamType>
+  </file>
+</files>

@@ -1,0 +1,432 @@
+{
+  "production": [
+    {
+      "identifier": "minimailboxes-aio-apache",
+      "dependsOn": [
+        "minimailboxes-aio-onlyoffice",
+        "minimailboxes-aio-collabora",
+        "minimailboxes-aio-talk",
+        "minimailboxes-aio-minimailboxes"
+      ],
+      "displayName": "Apache",
+      "containerName": "minimailboxes/aio-apache",
+      "ports": [
+        "%APACHE_PORT%/tcp"
+      ],
+      "internalPorts": [
+        "%APACHE_PORT%"
+      ],
+      "secrets": [],
+      "environmentVariables": [
+        "NC_DOMAIN=%NC_DOMAIN%",
+        "MINIMAILBOXES_HOST=minimailboxes-aio-minimailboxes",
+        "COLLABORA_HOST=minimailboxes-aio-collabora",
+        "TALK_HOST=minimailboxes-aio-talk",
+        "APACHE_PORT=%APACHE_PORT%",
+        "ONLYOFFICE_HOST=minimailboxes-aio-onlyoffice",
+        "TZ=%TIMEZONE%",
+        "APACHE_MAX_SIZE=%APACHE_MAX_SIZE%",
+        "APACHE_MAX_TIME=%MINIMAILBOXES_MAX_TIME%"
+      ],
+      "volumes": [
+        {
+          "name": "minimailboxes_aio_minimailboxes",
+          "location": "/var/www/html",
+          "writeable": false
+        },
+        {
+          "name": "minimailboxes_aio_apache",
+          "location": "/mnt/data",
+          "writeable": true
+        }
+      ],
+      "maxShutdownTime": 10,
+      "restartPolicy": "unless-stopped"
+    },
+    {
+      "identifier": "minimailboxes-aio-database",
+      "dependsOn": [],
+      "displayName": "Database",
+      "containerName": "minimailboxes/aio-postgresql",
+      "ports": [],
+      "internalPorts": [
+        "5432"
+      ],
+      "secrets": [
+        "DATABASE_PASSWORD"
+      ],
+      "volumes": [
+        {
+          "name": "minimailboxes_aio_database",
+          "location": "/var/lib/postgresql/data",
+          "writeable": true
+        },
+        {
+          "name": "minimailboxes_aio_database_dump",
+          "location": "/mnt/data",
+          "writeable": true
+        }
+      ],
+      "environmentVariables": [
+        "POSTGRES_PASSWORD=%DATABASE_PASSWORD%",
+        "POSTGRES_DB=minimailboxes_database",
+        "POSTGRES_USER=minimailboxes",
+        "TZ=%TIMEZONE%",
+        "PGTZ=%TIMEZONE%"
+      ],
+      "maxShutdownTime": 1800,
+      "restartPolicy": "unless-stopped"
+    },
+    {
+      "identifier": "minimailboxes-aio-minimailboxes",
+      "dependsOn": [
+        "minimailboxes-aio-database",
+        "minimailboxes-aio-redis",
+        "minimailboxes-aio-clamav",
+        "minimailboxes-aio-fulltextsearch",
+        "minimailboxes-aio-imaginary"
+      ],
+      "displayName": "MiniMailboxes",
+      "containerName": "minimailboxes/aio-minimailboxes",
+      "ports": [],
+      "internalPorts": [
+        "9000"
+      ],
+      "secrets": [
+        "DATABASE_PASSWORD",
+        "REDIS_PASSWORD",
+        "MINIMAILBOXES_PASSWORD",
+        "TURN_SECRET",
+        "SIGNALING_SECRET"
+      ],
+      "volumes": [
+        {
+          "name": "minimailboxes_aio_minimailboxes",
+          "location": "/var/www/html",
+          "writeable": true
+        },
+        {
+          "name": "%MINIMAILBOXES_DATADIR%",
+          "location": "/mnt/ncdata",
+          "writeable": true
+        },
+        {
+          "name": "%MINIMAILBOXES_MOUNT%",
+          "location": "%MINIMAILBOXES_MOUNT%",
+          "writeable": true
+        },
+        {
+          "name": "%TRUSTED_CACERTS_DIR%",
+          "location": "/usr/local/share/ca-certificates",
+          "writeable": false
+        }
+      ],
+      "environmentVariables": [
+        "POSTGRES_HOST=minimailboxes-aio-database",
+        "POSTGRES_PASSWORD=%DATABASE_PASSWORD%",
+        "POSTGRES_DB=minimailboxes_database",
+        "POSTGRES_USER=minimailboxes",
+        "REDIS_HOST=minimailboxes-aio-redis",
+        "REDIS_HOST_PASSWORD=%REDIS_PASSWORD%",
+        "AIO_TOKEN=%AIO_TOKEN%",
+        "NC_DOMAIN=%NC_DOMAIN%",
+        "ADMIN_USER=admin",
+        "ADMIN_PASSWORD=%MINIMAILBOXES_PASSWORD%",
+        "MINIMAILBOXES_DATA_DIR=/mnt/ncdata",
+        "OVERWRITEHOST=%NC_DOMAIN%",
+        "OVERWRITEPROTOCOL=https",
+        "TURN_SECRET=%TURN_SECRET%",
+        "SIGNALING_SECRET=%SIGNALING_SECRET%",
+        "ONLYOFFICE_SECRET=%ONLYOFFICE_SECRET%",
+        "AIO_URL=%AIO_URL%",
+        "MINIMAILBOXES_MOUNT=%MINIMAILBOXES_MOUNT%",
+        "CLAMAV_ENABLED=%CLAMAV_ENABLED%",
+        "CLAMAV_HOST=minimailboxes-aio-clamav",
+        "ONLYOFFICE_ENABLED=%ONLYOFFICE_ENABLED%",
+        "COLLABORA_ENABLED=%COLLABORA_ENABLED%",
+        "COLLABORA_HOST=minimailboxes-aio-collabora",
+        "TALK_ENABLED=%TALK_ENABLED%",
+        "ONLYOFFICE_HOST=minimailboxes-aio-onlyoffice",
+        "UPDATE_MINIMAILBOXES_APPS=%UPDATE_MINIMAILBOXES_APPS%",
+        "TZ=%TIMEZONE%",
+        "TALK_PORT=%TALK_PORT%",
+        "IMAGINARY_ENABLED=%IMAGINARY_ENABLED%",
+        "IMAGINARY_HOST=minimailboxes-aio-imaginary",
+        "PHP_UPLOAD_LIMIT=%MINIMAILBOXES_UPLOAD_LIMIT%",
+        "FULLTEXTSEARCH_ENABLED=%FULLTEXTSEARCH_ENABLED%",
+        "FULLTEXTSEARCH_HOST=minimailboxes-aio-fulltextsearch",
+        "PHP_MAX_TIME=%MINIMAILBOXES_MAX_TIME%",
+        "TRUSTED_CACERTS_DIR=%TRUSTED_CACERTS_DIR%"
+      ],
+      "maxShutdownTime": 10,
+      "restartPolicy": "unless-stopped"
+    },
+    {
+      "identifier": "minimailboxes-aio-redis",
+      "dependsOn": [],
+      "displayName": "Redis",
+      "containerName": "minimailboxes/aio-redis",
+      "ports": [],
+      "internalPorts": [
+        "6379"
+      ],
+      "environmentVariables": [
+        "REDIS_HOST_PASSWORD=%REDIS_PASSWORD%",
+        "TZ=%TIMEZONE%"
+      ],
+      "volumes": [],
+      "secrets": [
+        "REDIS_PASSWORD",
+        "ONLYOFFICE_SECRET"
+      ],
+      "maxShutdownTime": 10,
+      "restartPolicy": "unless-stopped"
+    },
+    {
+      "identifier": "minimailboxes-aio-collabora",
+      "dependsOn": [],
+      "displayName": "Collabora",
+      "containerName": "minimailboxes/aio-collabora",
+      "ports": [],
+      "internalPorts": [
+        "9980"
+      ],
+      "environmentVariables": [
+        "aliasgroup1=https://%NC_DOMAIN%:443",
+        "extra_params=--o:ssl.enable=false --o:ssl.termination=true --o:logging.level=warning --o:home_mode.enable=true %COLLABORA_SECCOMP_POLICY%",
+        "dictionaries=%COLLABORA_DICTIONARIES%",
+        "TZ=%TIMEZONE%"
+      ],
+      "volumes": [],
+      "secrets": [],
+      "maxShutdownTime": 10,
+      "restartPolicy": "unless-stopped"
+    },
+    {
+      "identifier": "minimailboxes-aio-talk",
+      "dependsOn": [],
+      "displayName": "Talk",
+      "containerName": "minimailboxes/aio-talk",
+      "ports": [
+        "%TALK_PORT%/tcp",
+        "%TALK_PORT%/udp"
+      ],
+      "internalPorts": [
+        "%TALK_PORT%"
+      ],
+      "environmentVariables": [
+        "NC_DOMAIN=%NC_DOMAIN%",
+        "TURN_SECRET=%TURN_SECRET%",
+        "SIGNALING_SECRET=%SIGNALING_SECRET%",
+        "JANUS_API_KEY=%JANUS_API_KEY%",
+        "TZ=%TIMEZONE%",
+        "TALK_PORT=%TALK_PORT%"
+      ],
+      "volumes": [],
+      "secrets": [
+        "TURN_SECRET",
+        "SIGNALING_SECRET",
+        "JANUS_API_KEY"
+      ],
+      "maxShutdownTime": 10,
+      "restartPolicy": "unless-stopped"
+    },
+    {
+      "identifier": "minimailboxes-aio-borgbackup",
+      "dependsOn": [],
+      "displayName": "Borgbackup",
+      "containerName": "minimailboxes/aio-borgbackup",
+      "ports": [],
+      "internalPorts": [],
+      "environmentVariables": [
+        "BORG_PASSWORD=%BORGBACKUP_PASSWORD%",
+        "BORG_MODE=%BORGBACKUP_MODE%",
+        "SELECTED_RESTORE_TIME=%SELECTED_RESTORE_TIME%",
+        "BACKUP_RESTORE_PASSWORD=%BACKUP_RESTORE_PASSWORD%",
+        "ADDITIONAL_DIRECTORIES_BACKUP=%ADDITIONAL_DIRECTORIES_BACKUP%",
+        "BORGBACKUP_HOST_LOCATION=%BORGBACKUP_HOST_LOCATION%"
+      ],
+      "volumes": [
+        {
+          "name": "minimailboxes_aio_backup_cache",
+          "location": "/root",
+          "writeable": true
+        },
+        {
+          "name": "minimailboxes_aio_minimailboxes",
+          "location": "/minimailboxes_aio_volumes/minimailboxes_aio_minimailboxes",
+          "writeable": true
+        },
+        {
+          "name": "%MINIMAILBOXES_DATADIR%",
+          "location": "/minimailboxes_aio_volumes/minimailboxes_aio_minimailboxes_data",
+          "writeable": true
+        },
+        {
+          "name": "minimailboxes_aio_database",
+          "location": "/minimailboxes_aio_volumes/minimailboxes_aio_database",
+          "writeable": true
+        },
+        {
+          "name": "minimailboxes_aio_database_dump",
+          "location": "/minimailboxes_aio_volumes/minimailboxes_aio_database_dump",
+          "writeable": true
+        },
+        {
+          "name": "minimailboxes_aio_apache",
+          "location": "/minimailboxes_aio_volumes/minimailboxes_aio_apache",
+          "writeable": true
+        },
+        {
+          "name": "minimailboxes_aio_mastercontainer",
+          "location": "/minimailboxes_aio_volumes/minimailboxes_aio_mastercontainer",
+          "writeable": true
+        },
+        {
+          "name": "%BORGBACKUP_HOST_LOCATION%",
+          "location": "/mnt/borgbackup",
+          "writeable": true
+        }
+      ],
+      "secrets": [
+        "BORGBACKUP_PASSWORD"
+      ],
+      "maxShutdownTime": 10,
+      "restartPolicy": ""
+    },
+    {
+      "identifier": "minimailboxes-aio-watchtower",
+      "dependsOn": [],
+      "displayName": "Watchtower",
+      "containerName": "minimailboxes/aio-watchtower",
+      "ports": [],
+      "internalPorts": [],
+      "environmentVariables": [
+        "CONTAINER_TO_UPDATE=minimailboxes-aio-mastercontainer"
+      ],
+      "volumes": [
+        {
+          "name": "%DOCKER_SOCKET_PATH%",
+          "location": "/var/run/docker.sock",
+          "writeable": false
+        }
+      ],
+      "secrets": [],
+      "maxShutdownTime": 10,
+      "restartPolicy": ""
+    },
+    {
+      "dependsOn": [],
+      "identifier": "minimailboxes-aio-domaincheck",
+      "displayName": "Domaincheck",
+      "containerName": "minimailboxes/aio-domaincheck",
+      "ports": [
+        "%APACHE_PORT%/tcp"
+      ],
+      "internalPorts": [],
+      "environmentVariables": [
+        "INSTANCE_ID=%INSTANCE_ID%",
+        "APACHE_PORT=%APACHE_PORT%"
+      ],
+      "volumes": [],
+      "secrets": [
+        "INSTANCE_ID"
+      ],
+      "maxShutdownTime": 1,
+      "restartPolicy": ""
+    },
+    {
+      "identifier": "minimailboxes-aio-clamav",
+      "dependsOn": [],
+      "displayName": "ClamAV",
+      "containerName": "minimailboxes/aio-clamav",
+      "ports": [],
+      "internalPorts": [
+        "3310"
+      ],
+      "environmentVariables": [
+        "TZ=%TIMEZONE%"
+      ],
+      "volumes": [
+        {
+          "name": "minimailboxes_aio_clamav",
+          "location": "/var/lib/clamav",
+          "writeable": true
+        }
+      ],
+      "secrets": [],
+      "maxShutdownTime": 10,
+      "restartPolicy": "unless-stopped"
+    },
+    {
+      "identifier": "minimailboxes-aio-onlyoffice",
+      "dependsOn": [],
+      "displayName": "OnlyOffice",
+      "containerName": "minimailboxes/aio-onlyoffice",
+      "ports": [],
+      "internalPorts": [
+        "80"
+      ],
+      "environmentVariables": [
+        "TZ=%TIMEZONE%",
+        "JWT_ENABLED=true",
+        "JWT_HEADER=AuthorizationJwt",
+        "JWT_SECRET=%ONLYOFFICE_SECRET%"
+      ],
+      "volumes": [
+        {
+          "name": "minimailboxes_aio_onlyoffice",
+          "location": "/var/lib/onlyoffice",
+          "writeable": true
+        }
+      ],
+      "secrets": [
+        "ONLYOFFICE_SECRET"
+      ],
+      "maxShutdownTime": 10,
+      "restartPolicy": "unless-stopped"
+    },
+    {
+      "identifier": "minimailboxes-aio-imaginary",
+      "dependsOn": [],
+      "displayName": "Imaginary",
+      "containerName": "minimailboxes/aio-imaginary",
+      "ports": [],
+      "internalPorts": [
+        "9000"
+      ],
+      "environmentVariables": [
+        "TZ=%TIMEZONE%"
+      ],
+      "volumes": [],
+      "secrets": [],
+      "maxShutdownTime": 10,
+      "restartPolicy": "unless-stopped"
+    },
+    {
+      "identifier": "minimailboxes-aio-fulltextsearch",
+      "dependsOn": [],
+      "displayName": "Fulltextsearch",
+      "containerName": "minimailboxes/aio-fulltextsearch",
+      "ports": [],
+      "internalPorts": [
+        "9200"
+      ],
+      "environmentVariables": [
+        "TZ=%TIMEZONE%",
+        "discovery.type=single-node",
+        "ES_JAVA_OPTS=-Xms1024M -Xmx1024M"
+      ],
+      "volumes": [
+        {
+          "name": "minimailboxes_aio_elasticsearch",
+          "location": "/usr/share/elasticsearch/data",
+          "writeable": true
+        }
+      ],
+      "secrets": [],
+      "maxShutdownTime": 10,
+      "restartPolicy": "unless-stopped"
+    }
+  ]
+}

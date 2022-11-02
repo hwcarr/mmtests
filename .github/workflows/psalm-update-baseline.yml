@@ -1,0 +1,48 @@
+name: Update Psalm baseline
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '5 4 * * *'
+
+jobs:
+  update-psalm-baseline:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up php8.0
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.0
+          extensions: apcu
+          coverage: none
+
+      - name: Run script
+        run: |
+          set -x
+          cd php
+          composer global require vimeo/psalm --prefer-dist --no-progress --dev
+          composer install
+          composer run psalm -- --monochrome --no-progress --output-format=text --update-baseline
+          git clean -f lib/composer
+          git checkout composer.json composer.lock lib/composer
+        continue-on-error: true
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v4
+        with:
+          token: ${{ secrets.COMMAND_BOT_PAT }}
+          commit-message: Update psalm baseline
+          committer: GitHub <noreply@github.com>
+          author: minimailboxes.command <minimailboxes.command@users.noreply.github.com>
+          signoff: true
+          branch: automated/noid/psalm-baseline-update
+          # Make sure we can open multiple PRs
+          branch-suffix: timestamp
+          title: '[Automated] Update psalm-baseline.xml'
+          body: |
+            Auto-generated update psalm-baseline.xml with fixed psalm warnings
+          labels: |
+            3. to review

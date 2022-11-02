@@ -1,0 +1,216 @@
+version: "3.8"
+
+services:
+  minimailboxes-aio-apache:
+    container_name: minimailboxes-aio-apache
+    depends_on:
+      - minimailboxes-aio-onlyoffice
+      - minimailboxes-aio-collabora
+      - minimailboxes-aio-talk
+      - minimailboxes-aio-minimailboxes
+    image: minimailboxes/aio-apache:latest
+    ports:
+      - ${APACHE_PORT}:${APACHE_PORT}/tcp
+    environment:
+      - NC_DOMAIN=${NC_DOMAIN}
+      - MINIMAILBOXES_HOST=minimailboxes-aio-minimailboxes
+      - COLLABORA_HOST=minimailboxes-aio-collabora
+      - TALK_HOST=minimailboxes-aio-talk
+      - APACHE_PORT=${APACHE_PORT}
+      - ONLYOFFICE_HOST=minimailboxes-aio-onlyoffice
+      - TZ=${TIMEZONE}
+      - APACHE_MAX_SIZE=${APACHE_MAX_SIZE}
+      - APACHE_MAX_TIME=${MINIMAILBOXES_MAX_TIME}
+    volumes:
+      - minimailboxes_aio_minimailboxes:/var/www/html:ro
+      - minimailboxes_aio_apache:/mnt/data:rw
+    stop_grace_period: 10s
+    restart: unless-stopped
+    networks:
+      - minimailboxes-aio
+ 
+  minimailboxes-aio-database:
+    container_name: minimailboxes-aio-database
+    image: minimailboxes/aio-postgresql:latest
+    volumes:
+      - minimailboxes_aio_database:/var/lib/postgresql/data:rw
+      - minimailboxes_aio_database_dump:/mnt/data:rw
+    environment:
+      - POSTGRES_PASSWORD=${DATABASE_PASSWORD}
+      - POSTGRES_DB=minimailboxes_database
+      - POSTGRES_USER=minimailboxes
+      - TZ=${TIMEZONE}
+      - PGTZ=${TIMEZONE}
+    stop_grace_period: 1800s
+    restart: unless-stopped
+    networks:
+      - minimailboxes-aio
+ 
+  minimailboxes-aio-minimailboxes:
+    container_name: minimailboxes-aio-minimailboxes
+    depends_on:
+      - minimailboxes-aio-database
+      - minimailboxes-aio-redis
+      - minimailboxes-aio-clamav
+      - minimailboxes-aio-fulltextsearch
+      - minimailboxes-aio-imaginary
+    image: minimailboxes/aio-minimailboxes:latest
+    volumes:
+      - minimailboxes_aio_minimailboxes:/var/www/html:rw
+      - ${MINIMAILBOXES_DATADIR}:/mnt/ncdata:rw
+      - ${MINIMAILBOXES_MOUNT}:${MINIMAILBOXES_MOUNT}:rw
+      - ${TRUSTED_CACERTS_DIR}:/usr/local/share/ca-certificates:ro
+    environment:
+      - POSTGRES_HOST=minimailboxes-aio-database
+      - POSTGRES_PASSWORD=${DATABASE_PASSWORD}
+      - POSTGRES_DB=minimailboxes_database
+      - POSTGRES_USER=minimailboxes
+      - REDIS_HOST=minimailboxes-aio-redis
+      - REDIS_HOST_PASSWORD=${REDIS_PASSWORD}
+      - AIO_TOKEN=${AIO_TOKEN}
+      - NC_DOMAIN=${NC_DOMAIN}
+      - ADMIN_USER=admin
+      - ADMIN_PASSWORD=${MINIMAILBOXES_PASSWORD}
+      - MINIMAILBOXES_DATA_DIR=/mnt/ncdata
+      - OVERWRITEHOST=${NC_DOMAIN}
+      - OVERWRITEPROTOCOL=https
+      - TURN_SECRET=${TURN_SECRET}
+      - SIGNALING_SECRET=${SIGNALING_SECRET}
+      - ONLYOFFICE_SECRET=${ONLYOFFICE_SECRET}
+      - AIO_URL=${AIO_URL}
+      - MINIMAILBOXES_MOUNT=${MINIMAILBOXES_MOUNT}
+      - CLAMAV_ENABLED=${CLAMAV_ENABLED}
+      - CLAMAV_HOST=minimailboxes-aio-clamav
+      - ONLYOFFICE_ENABLED=${ONLYOFFICE_ENABLED}
+      - COLLABORA_ENABLED=${COLLABORA_ENABLED}
+      - COLLABORA_HOST=minimailboxes-aio-collabora
+      - TALK_ENABLED=${TALK_ENABLED}
+      - ONLYOFFICE_HOST=minimailboxes-aio-onlyoffice
+      - UPDATE_MINIMAILBOXES_APPS=${UPDATE_MINIMAILBOXES_APPS}
+      - TZ=${TIMEZONE}
+      - TALK_PORT=${TALK_PORT}
+      - IMAGINARY_ENABLED=${IMAGINARY_ENABLED}
+      - IMAGINARY_HOST=minimailboxes-aio-imaginary
+      - PHP_UPLOAD_LIMIT=${MINIMAILBOXES_UPLOAD_LIMIT}
+      - FULLTEXTSEARCH_ENABLED=${FULLTEXTSEARCH_ENABLED}
+      - FULLTEXTSEARCH_HOST=minimailboxes-aio-fulltextsearch
+      - PHP_MAX_TIME=${MINIMAILBOXES_MAX_TIME}
+      - TRUSTED_CACERTS_DIR=${TRUSTED_CACERTS_DIR}
+    stop_grace_period: 10s
+    restart: unless-stopped
+    networks:
+      - minimailboxes-aio
+ 
+  minimailboxes-aio-redis:
+    container_name: minimailboxes-aio-redis
+    image: minimailboxes/aio-redis:latest
+    environment:
+      - REDIS_HOST_PASSWORD=${REDIS_PASSWORD}
+      - TZ=${TIMEZONE}
+    stop_grace_period: 10s
+    restart: unless-stopped
+    networks:
+      - minimailboxes-aio
+ 
+  minimailboxes-aio-collabora:
+    container_name: minimailboxes-aio-collabora
+    image: minimailboxes/aio-collabora:latest
+    environment:
+      - aliasgroup1=https://${NC_DOMAIN}:443
+      - extra_params=--o:ssl.enable=false --o:ssl.termination=true --o:logging.level=warning --o:home_mode.enable=true ${COLLABORA_SECCOMP_POLICY}
+      - dictionaries=${COLLABORA_DICTIONARIES}
+      - TZ=${TIMEZONE}
+    stop_grace_period: 10s
+    restart: unless-stopped
+    networks:
+      - minimailboxes-aio
+ 
+  minimailboxes-aio-talk:
+    container_name: minimailboxes-aio-talk
+    image: minimailboxes/aio-talk:latest
+    ports:
+      - ${TALK_PORT}:${TALK_PORT}/tcp
+      - ${TALK_PORT}:${TALK_PORT}/udp
+    environment:
+      - NC_DOMAIN=${NC_DOMAIN}
+      - TURN_SECRET=${TURN_SECRET}
+      - SIGNALING_SECRET=${SIGNALING_SECRET}
+      - JANUS_API_KEY=${JANUS_API_KEY}
+      - TZ=${TIMEZONE}
+      - TALK_PORT=${TALK_PORT}
+    stop_grace_period: 10s
+    restart: unless-stopped
+    networks:
+      - minimailboxes-aio
+ 
+  minimailboxes-aio-clamav:
+    container_name: minimailboxes-aio-clamav
+    image: minimailboxes/aio-clamav:latest
+    environment:
+      - TZ=${TIMEZONE}
+    volumes:
+      - minimailboxes_aio_clamav:/var/lib/clamav:rw
+    stop_grace_period: 10s
+    restart: unless-stopped
+    networks:
+      - minimailboxes-aio
+ 
+  minimailboxes-aio-onlyoffice:
+    container_name: minimailboxes-aio-onlyoffice
+    image: minimailboxes/aio-onlyoffice:latest
+    environment:
+      - TZ=${TIMEZONE}
+      - JWT_ENABLED=true
+      - JWT_HEADER=AuthorizationJwt
+      - JWT_SECRET=${ONLYOFFICE_SECRET}
+    volumes:
+      - minimailboxes_aio_onlyoffice:/var/lib/onlyoffice:rw
+    stop_grace_period: 10s
+    restart: unless-stopped
+    networks:
+      - minimailboxes-aio
+ 
+  minimailboxes-aio-imaginary:
+    container_name: minimailboxes-aio-imaginary
+    image: minimailboxes/aio-imaginary:latest
+    environment:
+      - TZ=${TIMEZONE}
+    stop_grace_period: 10s
+    restart: unless-stopped
+    networks:
+      - minimailboxes-aio
+ 
+  minimailboxes-aio-fulltextsearch:
+    container_name: minimailboxes-aio-fulltextsearch
+    image: minimailboxes/aio-fulltextsearch:latest
+    environment:
+      - TZ=${TIMEZONE}
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms1024M -Xmx1024M
+    volumes:
+      - minimailboxes_aio_elasticsearch:/usr/share/elasticsearch/data:rw
+    stop_grace_period: 10s
+    restart: unless-stopped
+    networks:
+      - minimailboxes-aio
+
+volumes:
+  minimailboxes_aio_apache:
+    name: minimailboxes_aio_apache
+  minimailboxes_aio_clamav:
+    name: minimailboxes_aio_clamav
+  minimailboxes_aio_database:
+    name: minimailboxes_aio_database
+  minimailboxes_aio_database_dump:
+    name: minimailboxes_aio_database_dump
+  minimailboxes_aio_elasticsearch:
+    name: minimailboxes_aio_elasticsearch
+  minimailboxes_aio_minimailboxes:
+    name: minimailboxes_aio_minimailboxes
+  minimailboxes_aio_onlyoffice:
+    name: minimailboxes_aio_onlyoffice
+  minimailboxes_aio_minimailboxes_data:
+    name: minimailboxes_aio_minimailboxes_data
+
+networks:
+  minimailboxes-aio:

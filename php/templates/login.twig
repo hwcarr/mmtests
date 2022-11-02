@@ -1,0 +1,23 @@
+{% extends "layout.twig" %}
+
+{% block body %}
+    <div class="login-wrapper">
+        <div class="login">
+            <img src="/img/logo-blue.svg" style="margin-left: auto;margin-right: auto;display: block;">
+            <h1>MiniMailboxes AIO Login</h1>
+            {% if is_login_allowed == true %}
+                <p>Log in using your MiniMailboxes AIO password:</p>
+                <form method="POST" action="/api/auth/login">
+                    <input type="text" autocomplete="off" name="password" placeholder="Password" />
+                    <input type="hidden" name="{{csrf.keys.name}}" value="{{csrf.name}}">
+                    <input type="hidden" name="{{csrf.keys.value}}" value="{{csrf.value}}">
+                    <input type="submit" class="button" value="Log in" />
+                </form>
+            {% else %}
+                <p>The login is blocked since MiniMailboxes is running. Please use the automatic login from your MiniMailboxes.<br><br>
+                You can unblock the login by running 'sudo docker stop minimailboxes-aio-apache'.</p>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
+

@@ -1,0 +1,14 @@
+{% extends "layout.twig" %}
+
+{% block body %}
+    <div class="login-wrapper">
+        <div class="login">
+            <img src="/img/logo-blue.svg" style="margin-left: auto;margin-right: auto;display: block;">
+            <h1>MiniMailboxes AIO setup</h1>
+            <p>MiniMailboxes AIO stands for MiniMailboxes All In One and provides easy deployment and maintenance with most features included in this one MiniMailboxes instance.</p>
+            <p>Please note down the password to access the AIO interface and don't lose it!</p>
+            <strong>Password</strong><br/> <span class="monospace">{{ password }}</span><br>
+            <a href="/" class="button" target="_blank" rel="noopener">Open MiniMailboxes AIO login ↗</a>
+        </div>
+    </div>
+{% endblock %}
